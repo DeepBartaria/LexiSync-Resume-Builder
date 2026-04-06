@@ -1,8 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import brandLogoPng from "./assets/lexisync-logo.png";
 import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { langs } from "@uiw/codemirror-extensions-langs";
+
+class EditorErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err) {
+    console.error("Editor crashed:", err);
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
 
 const DEFAULT_SOURCE = `\\documentclass{article}
 \\usepackage[utf8]{inputenc}
@@ -81,6 +98,14 @@ export default function App() {
   const lastBlobRef = useRef(null);
 
   const selectedSet = useMemo(() => new Set(selectedSuggestionIds), [selectedSuggestionIds]);
+  const latexExtensions = useMemo(() => {
+    try {
+      return [langs.stex()];
+    } catch (e) {
+      console.error("Failed to init LaTeX extensions:", e);
+      return [];
+    }
+  }, []);
 
   const compile = useCallback(async () => {
     setCompiling(true);
@@ -882,20 +907,31 @@ export default function App() {
             <section style={styles.editorPane}>
               <div style={styles.paneLabel}>Current LaTeX resume code</div>
               <div style={styles.editorCmWrap}>
-                <CodeMirror
-                  value={source}
-                  onChange={(value) => setSource(value)}
-                  height="100%"
-                  theme={oneDark}
-                  extensions={[langs.stex()]}
-                  basicSetup={{
-                    lineNumbers: true,
-                    foldGutter: true,
-                    highlightActiveLine: true,
-                    highlightSelectionMatches: true,
-                    bracketMatching: true,
-                  }}
-                />
+                <EditorErrorBoundary
+                  fallback={
+                    <textarea
+                      style={styles.editorFallback}
+                      value={source}
+                      onChange={(e) => setSource(e.target.value)}
+                      spellCheck={false}
+                    />
+                  }
+                >
+                  <CodeMirror
+                    value={source}
+                    onChange={(value) => setSource(value)}
+                    height="100%"
+                    theme={oneDark}
+                    extensions={latexExtensions}
+                    basicSetup={{
+                      lineNumbers: true,
+                      foldGutter: true,
+                      highlightActiveLine: true,
+                      highlightSelectionMatches: true,
+                      bracketMatching: true,
+                    }}
+                  />
+                </EditorErrorBoundary>
               </div>
             </section>
             <section style={styles.previewPane}>
@@ -1479,6 +1515,19 @@ const styles = {
     flex: 1,
     minHeight: 0,
     background: "#0a0e14",
+  },
+  editorFallback: {
+    width: "100%",
+    height: "100%",
+    border: "none",
+    resize: "none",
+    padding: "0.75rem",
+    background: "#0a0e14",
+    color: "#dce7f5",
+    fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
+    fontSize: "13px",
+    lineHeight: 1.45,
+    outline: "none",
   },
   previewFrame: { flex: 1, minHeight: 0, background: "#252525" },
   iframe: { width: "100%", height: "100%", border: "none", minHeight: "400px" },
