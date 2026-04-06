@@ -1,0 +1,45 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --border: #2d3a4d;
+  --text: #e7edf5;
+  --muted: #8b9cb3;
+  --accent: #3d9aed;
+  --accent-hover: #5eb0f5;
+  --error: #f07178;
+  --success: #7fd394;
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .panels-responsive {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}
